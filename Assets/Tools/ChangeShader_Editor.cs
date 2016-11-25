@@ -7,14 +7,20 @@ using System.Collections.Generic;
 public class ShaderChanger : EditorWindow
 {
 
-    private bool UseMobileShader;
-    private Shader MobileShader;
+    private bool useMobileShader;
+    private Shader mobileShader;
     private Shader PCShader;
-    private string MobileShader_Diffuse = "_MainTex";
-    private string PCShader_Diffuse = "_Diffuse_Texture";
+    private string mobileShader_Diffuse = "_MainTex";
+    private string PCShader_Diffuse = "_MainTex";
     private List<Material> _matList = new List<Material>();
     private Renderer[] _renderers;
-    private bool switched;
+    //private bool switched;
+
+    //Settings:
+    private bool autoToggleShaders = true;
+    private bool refreshMatListOnChange = true;
+
+    //Automation
 
     [MenuItem("Window/Shader Changer")]
     public static void ShowWindow()
@@ -25,8 +31,8 @@ public class ShaderChanger : EditorWindow
 
     void OnEnable()
     {
-        MobileShader = Shader.Find("Mobile/Diffuse");
-        PCShader = Shader.Find("UnityVR/Puni_Shader");
+        mobileShader = Shader.Find("Mobile/Diffuse");
+        PCShader = Shader.Find("Standard");
     }
 
     void OnGUI()
@@ -34,7 +40,9 @@ public class ShaderChanger : EditorWindow
         EditorMenu();
     }
 
-    public void ListMaterials()
+
+    #region Functions
+    private void ListMaterials()
     {
         _matList.Clear();
         Debug.Log("Listing all materials");
@@ -53,52 +61,55 @@ public class ShaderChanger : EditorWindow
         Debug.Log("Material count: " + _matList.Count);
     }
 
-    public void ChangeShader()
+    private void ChangeShader()
     {
         if (_matList.Count == 0)
         {
             Debug.Log("Material list is empty");
             ListMaterials();
         }
-        if (UseMobileShader == true) { Debug.Log("Changing to MobileShader"); }
-        if (UseMobileShader != true) { Debug.Log("Changing to PCShader"); }
+        if (useMobileShader == true) { Debug.Log("Changing to MobileShader"); }
+        if (useMobileShader != true) { Debug.Log("Changing to PCShader"); }
 
         //"Check through all the materials in the list for shaders.
         foreach (Material mat in _matList)
         {
-            if (UseMobileShader == true)
+            if (useMobileShader == true)
             {
                 if (mat != null && mat.shader != null && mat.shader.name != null && mat.shader == PCShader)
                 {
                     Debug.Log("Shader " + PCShader.name + " found in material:" + mat.name);
                     Texture t = mat.GetTexture(PCShader_Diffuse);
-                    mat.shader = MobileShader;
-                    mat.SetTexture(MobileShader_Diffuse, t);
-                    Debug.Log("Shader changed for " + mat.name + " to " + MobileShader.name);
+                    mat.shader = mobileShader;
+                    mat.SetTexture(mobileShader_Diffuse, t);
+                    Debug.Log("Shader changed for " + mat.name + " to " + mobileShader.name);
                 }
             }
-            if (UseMobileShader != true)
+            if (useMobileShader != true)
             {
-                if (mat != null && mat.shader != null && mat.shader.name != null && mat.shader == MobileShader)
+                if (mat != null && mat.shader != null && mat.shader.name != null && mat.shader == mobileShader)
                 {
-                    Debug.Log("Shader " + MobileShader.name + " found in material:" + mat.name);
-                    Texture t = mat.GetTexture(MobileShader_Diffuse);
+                    Debug.Log("Shader " + mobileShader.name + " found in material:" + mat.name);
+                    Texture t = mat.GetTexture(mobileShader_Diffuse);
                     mat.shader = PCShader;
                     mat.SetTexture(PCShader_Diffuse, t);
-                    Debug.Log("Shader changed for " + mat.name + " to " + MobileShader.name);
+                    Debug.Log("Shader changed for " + mat.name + " to " + mobileShader.name);
                 }
             }
         }
     }
 
+    #endregion
 
-    void EditorMenu()
+    #region Editor
+
+    private void EditorMenu()
     {
         GUILayout.Label("ShaderChanger", EditorStyles.boldLabel);
-        UseMobileShader = EditorGUILayout.Toggle("Use MobileShader", UseMobileShader);
-        MobileShader = (Shader)EditorGUILayout.ObjectField("MobileShader", MobileShader, typeof(Shader), true);
+        useMobileShader = EditorGUILayout.Toggle("Use MobileShader", useMobileShader);
+        mobileShader = (Shader)EditorGUILayout.ObjectField("MobileShader", mobileShader, typeof(Shader), true);
         PCShader = (Shader)EditorGUILayout.ObjectField("PCShader", PCShader, typeof(Shader), true);
-        MobileShader_Diffuse = EditorGUILayout.TextField("Mobile Shader Diffuse", MobileShader_Diffuse);
+        mobileShader_Diffuse = EditorGUILayout.TextField("Mobile Shader Diffuse", mobileShader_Diffuse);
         PCShader_Diffuse = EditorGUILayout.TextField("PC Shader Diffuse", PCShader_Diffuse);
         GUILayout.Label("");
         if (GUILayout.Button("Refresh Materials"))
@@ -107,13 +118,33 @@ public class ShaderChanger : EditorWindow
         }
         if (GUILayout.Button("Change Shaders"))
         {
+            if (refreshMatListOnChange == true) ListMaterials();
             ChangeShader();
+            if (autoToggleShaders == true) AutoToggleShaders();
         }
+        GUILayout.Label("");
+        GUILayout.Label("");
+        GUILayout.Label("Settings:");
+        autoToggleShaders = EditorGUILayout.Toggle("Auto Toggle Shader", autoToggleShaders);
+        refreshMatListOnChange = EditorGUILayout.Toggle("Auto Refresh Materials", refreshMatListOnChange);
     }
+
+    #endregion
+
+    #region Settings
+
+    private void AutoToggleShaders()
+    {
+        if (useMobileShader == true) useMobileShader = false;
+        else useMobileShader = true;
+    }
+
+    #endregion
+
+    #region Unity
     // Update is called once per frame
     void Update()
     {
-
     }
 
     void OnFocus()
@@ -123,6 +154,6 @@ public class ShaderChanger : EditorWindow
     void OnDestroy()
     {
     }
-
+    #endregion
 }
 #endif
