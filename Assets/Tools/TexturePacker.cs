@@ -83,10 +83,12 @@ public class TexturePacker : EditorWindow
         GUILayout.Label("");
         if (GUILayout.Button("Refresh Materials"))
         {
+            Debug.Log("Listing materials");
             ListMaterials();
         }
         if (GUILayout.Button("List Textures"))
         {
+            Debug.Log("Listing textures");
             ListTextures();
         }
         if (GUILayout.Button("Pack Textures"))
